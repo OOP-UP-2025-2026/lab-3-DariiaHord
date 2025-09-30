@@ -3,67 +3,65 @@ package org.example.task2;
 import java.util.Arrays;
 
 public class Cart {
+    private Item[] items;
+    private int size;
 
-    public Item[] contents;
-    int index;
-
-    Cart(Item[] _contents) {
-        this.contents = _contents;
+    public Cart() {
+        this.items = new Item[10]; // внутрішня реалізація — масив
     }
 
-    public void removeById(int itemIndex) {
-
-        if (index == 0)
-            return;
-
-        int foundItemIndex = findItemInArray(contents[itemIndex]);
-
-        if (foundItemIndex == -1)
-            return;
-
-        if (foundItemIndex == index - 1) {
-            contents[index - 1] = null;
-            index--;
-            return;
-        }
-
-        shiftArray(foundItemIndex);
+    public void add(Item item) {
+        if (item == null) return;
+        ensureCapacity(size + 1);
+        items[size++] = item;
     }
 
-    public void shiftArray(int itemIndex) {
-        for (int i = itemIndex; i < index - 1; i++) {
-            contents[i] = contents[i + 1];
+    /** Видалення за id (нічого не робить, якщо не знайдено) */
+    public void removeById(long id) {
+        int idx = findIndexById(id);
+        if (idx == -1) return;
+        // зсув
+        for (int i = idx; i < size - 1; i++) {
+            items[i] = items[i + 1];
         }
-        contents[index-1] = null;
-        index--;
+        items[--size] = null;
     }
 
-    public int findItemInArray(Item item) {
-        for (int i = 0; i < index; i++) {
-            if (contents[i].id == item.id) {
-                return i;
-            }
-        }
+    public int size() { return size; }
 
+    /** Безпечний доступ до елемента за індексом (тільки читання) */
+    public Item get(int index) {
+        if (index < 0 || index >= size) throw new IndexOutOfBoundsException();
+        return items[index];
+    }
+
+    /** Сума по кошику */
+    public double total() {
+        double sum = 0;
+        for (int i = 0; i < size; i++) sum += items[i].getPrice();
+        return sum;
+    }
+
+    /** Повертає копію актуальної частини масиву (щоб не світити внутрішній стан) */
+    public Item[] toArray() {
+        return Arrays.copyOf(items, size);
+    }
+
+    private int findIndexById(long id) {
+        for (int i = 0; i < size; i++) {
+            if (items[i].getId() == id) return i;
+        }
         return -1;
     }
 
-    void add(Item item) {
-        if (isCartFull())
-            return;
-
-        contents[index] = item;
-        index++;
-    }
-
-    public boolean isCartFull() {
-        return index == contents.length;
+    private void ensureCapacity(int need) {
+        if (need <= items.length) return;
+        int newCap = Math.max(items.length * 2, need);
+        items = Arrays.copyOf(items, newCap);
     }
 
     @Override
     public String toString() {
-        return "Cart{" +
-                "contents=" + Arrays.toString(contents) +
-                '}' + "\n";
+        return "Cart{items=" + Arrays.toString(toArray()) + "}\n";
     }
 }
